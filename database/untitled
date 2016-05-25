@@ -1,0 +1,946 @@
+
+															Main.java
+
+package main;
+
+import java.io.IOException;
+
+import org.json.JSONException;
+
+import database.Cursor;
+import database.CustomObject;
+import database.DbAdministrator;
+import database.customArray;
+import database.observer.CursorObserver;
+import database.observer.CursorObserverImpl;
+
+public class Main {
+
+	public static void main(String[] args) throws JSONException, IOException {
+		DbAdministrator database = DbAdministrator.getInstance();
+		CursorObserver cursorObserver = new CursorObserverImpl();
+		database.restoreDatabase(); // recover snapshot of database form file
+		
+		Cursor data = database.getCursor();
+		data.addObserver(cursorObserver);
+		
+		System.out.println("\nWithout commit session");
+		database.startSession();
+		database.put("bar1", 300);
+		database.put("bar1", 400); 
+		database.put("foo1", 500); 
+		database.rollback();
+		database.printDatabase();
+		
+		customArray dbArray=new customArray();
+		dbArray=customArray.fromString("[1,5,2.4,\"lekkala\",[5,6,7],{\"name\" : \"siva\"}]");
+		String convertToObject="{\"name\":\"MyNode\", \"width\":200, \"height\":100.10, \"arr\":[3,4,5],\"obj\":{\"name\":\"dep\", \"width\":25, \"height\":11.0}}";
+		CustomObject customObject=CustomObject.fromString(convertToObject);
+		// Session
+		System.out.println("\nUsing commit session");
+		database.startSession();
+		database.put("bar3", customObject);
+		database.put("array", dbArray);
+		database.put("bar1", 300);
+		database.put("bar1", 400); 
+		database.put("foo1", 500); 
+		database.printDatabase();
+		database.saveDatabase();   //snapShot of database save into file
+	}
+
+}
+
+
+OUTPUT:
+
+[Database: {bar1=400.0, bar=20.0, array={customArray=[1.0, 5.0, 2.4, lekkala, {customArray=[{myArrayList=[5.0, 6.0, 7.0]}]}, {objectData={name=siva}}]}, foo=30.0, foo1=500.0, bar3={objectData={height=100.1, arr={customArray=[{myArrayList=[3.0, 4.0, 5.0]}]}, name=MyNode, width=200.0, obj={objectData={height=11.0, name=dep, width=25.0}}}}}]
+
+Without commit session
+CursorObserver: The data in bar1 has been change to 300
+CursorObserver: The data in bar1 has been change to 400
+CursorObserver: The data in foo1 has been change to 500
+[Database: {bar1=400.0, bar=20.0, array={customArray=[1.0, 5.0, 2.4, lekkala, {customArray=[{myArrayList=[5.0, 6.0, 7.0]}]}, {objectData={name=siva}}]}, foo=30.0, foo1=500.0, bar3={objectData={height=100.1, arr={customArray=[{myArrayList=[3.0, 4.0, 5.0]}]}, name=MyNode, width=200.0, obj={objectData={height=11.0, name=dep, width=25.0}}}}}]
+
+Using commit session
+CursorObserver: The data in bar3 has been change to {height:100.1,arr:[[3,4,5]],name:MyNode,width:200,obj:{height:11.0,name:dep,width:25}}
+CursorObserver: The data in array has been change to [1,5,2.4,lekkala,[[5,6,7]],{name:siva}]
+CursorObserver: The data in bar1 has been change to 300
+CursorObserver: The data in bar1 has been change to 400
+CursorObserver: The data in foo1 has been change to 500
+[Database: {bar1=400, bar=20.0, array=[1,5,2.4,lekkala,[[5,6,7]],{name:siva}], foo=30.0, foo1=500, bar3={height:100.1,arr:[[3,4,5]],name:MyNode,width:200,obj:{height:11.0,name:dep,width:25}}}]
+
+
+{"mementoList":[{"state":{"bar":10.0}},{"state":{"bar":20.0}},{"state":{"bar":20.0,"foo":30.0,"bar1":200.0,"foo1":300.0}},{"state":{"bar1":100.0,"bar":20.0,"foo":30.0}},{"state":{"bar1":200.0,"bar":20.0,"foo":30.0}},{"state":{"bar1":200.0,"bar":20.0,"foo1":300.0,"foo":30.0}},{"state":{"bar":20.0,"bar3":{"objectData":{"height":100.1,"arr":{"customArray":[{"myArrayList":[3.0,4.0,5.0]}]},"name":"MyNode","width":200.0,"obj":{"objectData":{"height":11.0,"name":"dep","width":25.0}}}},"foo":30.0}},{"state":{"bar":20.0,"array":{"customArray":[1.0,5.0,2.4,"lekkala",{"customArray":[{"myArrayList":[5.0,6.0,7.0]}]},{"objectData":{"name":"siva"}}]},"bar3":{"objectData":{"height":100.1,"arr":{"customArray":[{"myArrayList":[3.0,4.0,5.0]}]},"name":"MyNode","width":200.0,"obj":{"objectData":{"height":11.0,"name":"dep","width":25.0}}}},"foo":30.0}},{"state":{"bar1":100.0,"bar":20.0,"array":{"customArray":[1.0,5.0,2.4,"lekkala",{"customArray":[{"myArrayList":[5.0,6.0,7.0]}]},{"objectData":{"name":"siva"}}]},"bar3":{"objectData":{"height":100.1,"arr":{"customArray":[{"myArrayList":[3.0,4.0,5.0]}]},"name":"MyNode","width":200.0,"obj":{"objectData":{"height":11.0,"name":"dep","width":25.0}}}},"foo":30.0}},{"state":{"bar1":200.0,"bar":20.0,"array":{"customArray":[1.0,5.0,2.4,"lekkala",{"customArray":[{"myArrayList":[5.0,6.0,7.0]}]},{"objectData":{"name":"siva"}}]},"bar3":{"objectData":{"height":100.1,"arr":{"customArray":[{"myArrayList":[3.0,4.0,5.0]}]},"name":"MyNode","width":200.0,"obj":{"objectData":{"height":11.0,"name":"dep","width":25.0}}}},"foo":30.0}},{"state":{"bar1":200.0,"bar":20.0,"array":{"customArray":[1.0,5.0,2.4,"lekkala",{"customArray":[{"myArrayList":[5.0,6.0,7.0]}]},{"objectData":{"name":"siva"}}]},"foo":30.0,"foo1":300.0,"bar3":{"objectData":{"height":100.1,"arr":{"customArray":[{"myArrayList":[3.0,4.0,5.0]}]},"name":"MyNode","width":200.0,"obj":{"objectData":{"height":11.0,"name":"dep","width":25.0}}}}}}}
+
+
+
+												Database.java
+
+
+package database;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import database.command.DbCommand;
+import database.command.DeleteCommand;
+import database.command.GetCommand;
+import database.command.PutCommand;
+import database.memento.DbMemento;
+import database.memento.DbOriginator;
+
+public class Database implements DbOriginator {
+	private Map<String, Object> database;
+	private Map<String, Object> savedDatabase;
+	private DbCommand putCommand;
+	private DbCommand getCommand;
+	private DbCommand deleteCommand;
+
+	public Database() {
+		database = new HashMap<String, Object>();
+		putCommand = new PutCommand(database);
+		getCommand = new GetCommand(database);
+		deleteCommand = new DeleteCommand(database);
+	}
+
+	public Cursor get(Cursor cursor) {
+		return getCommand.execute(cursor);
+	}
+
+	public Cursor put(Cursor cursor) {
+		return putCommand.execute(cursor);
+	}
+
+	public Cursor delete(Cursor cursor) {
+		return deleteCommand.execute(cursor);
+	}
+
+	public void startSession() {
+		savedDatabase = new HashMap<String, Object>(database);
+	}
+
+	public void rollback() {
+		if (savedDatabase == null) {
+			throw new IllegalStateException("Session must be started first");
+		}
+		setState(savedDatabase);
+		savedDatabase = null;
+	}
+
+	@Override
+	public void setState(Map<String, Object> state) {
+		database = state;
+		putCommand = new PutCommand(database);
+		getCommand = new GetCommand(database);
+		deleteCommand = new DeleteCommand(database);
+
+	}
+
+	@Override
+	public Map<String, Object> getState() {
+		return database;
+	}
+
+	@Override
+	public DbMemento saveStateToMemento() {
+		return new DbMemento(new HashMap<>(database));
+	}
+
+	@Override
+	public void getStateFromMemento(DbMemento memento) {
+		database = memento.getState();
+		putCommand = new PutCommand(database);
+		getCommand = new GetCommand(database);
+		deleteCommand = new DeleteCommand(database);
+	}
+
+	@Override
+	public String toString() {
+		String str = "[Database: " + database.toString() + "]";
+		return str;
+	}
+}
+
+
+
+
+
+
+
+
+										DbAdministrator.java
+
+
+package database;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
+
+import com.google.gson.Gson;
+
+import database.memento.DbCareTaker;
+
+public class DbAdministrator {
+	private static final String DB_LOCATION = "database/database.json";
+	private static DbAdministrator instance;
+	private Database database;
+	private Cursor cursor;
+	private DbCareTaker dbCareTaker;
+
+	private DbAdministrator(Database database, Cursor cursor, DbCareTaker dbCareTaker) {
+		this.database = database;
+		this.cursor = cursor;
+		this.dbCareTaker = dbCareTaker;
+	}
+
+	public static DbAdministrator getInstance() {
+		if (instance == null) {
+			Database database = new Database();
+			Cursor cursor = Cursor.getInstance();
+			DbCareTaker dbCareTaker = new DbCareTaker();
+			instance = new DbAdministrator(database, cursor, dbCareTaker);
+		}
+		return instance;
+	}
+
+	public Cursor put(String key, Object value) {
+		cursor.set(key, value);
+		cursor = database.put(cursor);
+		dbCareTaker.add(database.saveStateToMemento());
+		return cursor;
+	}
+
+	public Cursor get(String key) {
+		cursor.setKey(key);
+		cursor = database.get(cursor);
+		return cursor;
+	}
+
+	public Cursor delete(String key) {
+		cursor.setKey(key);
+		cursor = database.delete(cursor);
+		dbCareTaker.add(database.saveStateToMemento());
+		return cursor;
+	}
+
+	public Cursor getCursor() {
+		return cursor;
+	}
+
+	public void saveDatabase() {
+		saveDatabase(DB_LOCATION);
+	}
+
+	public void saveDatabase(String location) {
+		Gson gson = new Gson();
+		String json = gson.toJson(dbCareTaker);
+		System.out.println(json);
+
+		File file = null;
+		FileWriter writer = null;
+		try {
+			file = new File(location);
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+			file = new File(location);
+			writer = new FileWriter(file);
+			writer.write(json);
+		} catch (IOException e) {
+			throw new IllegalStateException("Cannot save database to " + location);
+		} finally {
+			closeWriter(writer);
+		}
+	}
+
+	public void restoreDatabase() {
+		restoreDatabase(DB_LOCATION);
+	}
+
+	public void restoreDatabase(String location) {
+		// Create the source
+		File file = new File(location);
+		// Create a "connection" stream, which connect directly to source
+		FileReader fileReader = null;
+		BufferedReader reader = null;
+		try {
+			fileReader = new FileReader(file);
+			// Create a "chain" (or "filter") stream
+			reader = new BufferedReader(fileReader);
+			StringBuffer sb = new StringBuffer();
+			String line = "";
+			while ((line = reader.readLine()) != null) {
+				sb.append(line).append("\n");
+			}
+			Gson gson = new Gson();
+			dbCareTaker = gson.fromJson(sb.toString(), DbCareTaker.class);
+			database.getStateFromMemento(dbCareTaker.getLatestState());
+			cursor = Cursor.getInstance();
+		} catch (Exception e) {
+			throw new IllegalStateException("Cannot restore database from " + location);
+		} finally {
+			closeReader(reader);
+			closeReader(fileReader);
+		}
+
+		printDatabase();
+	}
+
+	public void startSession() {
+		database.startSession();
+	}
+
+	public void rollback() {
+		database.rollback();
+	}
+
+	public void printDatabase() {
+		System.out.println(database);
+	}
+
+	private void closeReader(Reader reader) {
+		if (reader != null) {
+			try {
+				reader.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+
+	private void closeWriter(Writer writer) {
+		if (writer != null) {
+			try {
+				writer.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+}
+
+
+											DbCareTaker.java
+
+package database.memento;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class DbCareTaker {
+	private List<DbMemento> mementoList = new ArrayList<DbMemento>();
+
+	public void add(DbMemento state) {
+		mementoList.add(state);
+	}
+
+	public DbMemento get(int index) {
+		return mementoList.get(index);
+	}
+
+	public DbMemento getLatestState() {
+		return mementoList.get(mementoList.size() - 1);
+	}
+}
+
+
+												DbMemento.java
+
+package database.memento;
+
+import java.util.Map;
+
+public class DbMemento {
+	private Map<String, Object> state;
+
+	public DbMemento(Map<String, Object> state) {
+		this.state = state;
+	}
+
+	public Map<String, Object> getState() {
+		return state;
+	}
+}
+
+												DbOriginator.java
+
+package database.memento;
+
+import java.util.Map;
+
+public interface DbOriginator {
+	public void setState(Map<String, Object> state);
+
+	public Map<String, Object> getState();
+
+	public DbMemento saveStateToMemento();
+
+	public void getStateFromMemento(DbMemento memento);
+}
+
+
+
+													Cursor.java
+
+
+package database;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import database.observer.CursorObserver;
+
+public class Cursor {
+	private static Cursor instance;
+	private String key;
+	private Object value;
+	private List<CursorObserver> observers;
+
+	private Cursor() {
+		observers = new ArrayList<CursorObserver>();
+	}
+
+	public static Cursor getInstance() {
+		if (instance == null) {
+			instance = new Cursor();
+		}
+		return instance;
+	}
+
+	public Cursor(String key) {
+		this.key = key;
+	}
+
+	public Cursor(String key, Object value) {
+		this.key = key;
+		this.value = value;
+	}
+
+	public void addObserver(CursorObserver cursorObserver) {
+		observers.add(cursorObserver);
+	}
+
+	public void removeObserver(CursorObserver cursorObserver) {
+		observers.remove(cursorObserver);
+	}
+
+	public void notifyKeyChange() {
+		for (CursorObserver observer : observers) {
+			observer.onChange(key, value);
+		}
+	}
+
+	public void notifyValueChange() {
+		for (CursorObserver observer : observers) {
+			observer.onChange(key, value);
+		}
+	}
+
+	public void notifyChange() {
+		for (CursorObserver observer : observers) {
+			observer.onChange(key, value);
+		}
+	}
+
+	public void set(String key, Object value) {
+		this.key = key;
+		this.value = value;
+		notifyChange();
+	}
+
+	public String key() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public Object value() {
+		return value;
+	}
+
+	public void setValue(Object value) {
+		this.value = value;
+	}
+}
+
+												CursorObserver.java
+
+
+package database.observer;
+
+public interface CursorObserver {
+	public void onChange(String key, Object value);
+}
+
+												
+												CursorObserverImpl.java
+
+package database.observer;
+
+public class CursorObserverImpl implements CursorObserver {
+	@Override
+	public void onChange(String key, Object value) {
+		System.out.println("CursorObserver: The data in " + key + " has been change to " + value);
+	}
+
+}
+
+												DbSession.java
+
+
+package database.session;
+
+import java.util.List;
+
+import database.command.DbCommand;
+
+public class DbSession {
+	private List<DbCommand> commands;
+	
+	public void commit() {
+		for (DbCommand command: commands) {
+			command.execute();
+		}
+	}
+	
+	public void addToSession(DbCommand command) {
+		commands.add(command);
+	}
+}
+
+
+												DbCommand.java
+
+
+package database.command;
+
+import database.Cursor;
+
+public interface DbCommand {
+	public Cursor execute(Cursor cursor);
+}
+
+
+												DeleteCommand.java
+
+
+package database.command;
+
+import java.util.Map;
+
+import database.Cursor;
+
+public class DeleteCommand implements DbCommand {
+	private Map<String, Object> database;
+
+	public DeleteCommand(Map<String, Object> database) {
+		this.database = database;
+	}
+
+	@Override
+	public Cursor execute(Cursor cursor) {
+		Object deletedValue = database.remove(cursor.key());
+		cursor.setValue(deletedValue);
+		return cursor;
+	}
+
+}
+
+
+
+											GetCommand.java
+
+package database.command;
+
+import java.util.Map;
+
+import database.Cursor;
+
+public class GetCommand implements DbCommand {
+	private Map<String, Object> database;
+
+	public GetCommand(Map<String, Object> database) {
+		this.database = database;
+	}
+
+	@Override
+	public Cursor execute(Cursor cursor) {
+		Object value = database.get(cursor.key());
+		cursor.setValue(value);
+		return cursor;
+	}
+
+}
+
+
+													PutCommand.java
+
+
+package database.command;
+
+import java.util.Map;
+
+import database.Cursor;
+
+public class PutCommand implements DbCommand {
+	private Map<String, Object> database;
+
+	public PutCommand(Map<String, Object> database) {
+		this.database = database;
+	}
+
+	@Override
+	public Cursor execute(Cursor cursor) {
+		database.put(cursor.key(), cursor.value());
+		return cursor;
+	}
+
+}
+
+														CustomObject.java
+
+
+package database;
+
+import java.io.IOException;
+import java.util.Hashtable;
+import java.util.Iterator;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class CustomObject {
+	Hashtable<String, Object> objectData = new Hashtable<>();
+
+	public void put(String key, Object value) {
+		objectData.put(key, value);
+	}
+
+	public Object get(String key) {
+		return objectData.get(key);
+	}
+
+	public int getInteger(String key) throws Exception {
+		if (key == null) {
+			throw new IllegalArgumentException("Key " + key + " cannot be null.");
+		}
+		if (objectData.get(key) instanceof Integer)
+			return (int) objectData.get(key);
+		throw new Exception("Invalid Exception");
+	}
+
+	public double getDouble(String key) throws Exception {
+		if (key == null) {
+			throw new IllegalArgumentException("Key " + key + " cannot be null.");
+		}
+		if (objectData.get(key) instanceof Double)
+			return (double) objectData.get(key);
+		throw new Exception("Invalid Type");
+	}
+
+	public String getString(String key) throws Exception {
+		if (key == null) {
+			throw new IllegalArgumentException("Key " + key + " cannot be null.");
+		}
+		if (objectData.get(key) instanceof String)
+			return (String) objectData.get(key);
+		throw new Exception("Invalid Type");
+	}
+
+	public customArray getCustomArray(String key) throws Exception {
+		if (key == null) {
+			throw new IllegalArgumentException("Key " + key + " cannot be null.");
+		}
+		if (objectData.get(key) instanceof database.customArray)
+			return (customArray) objectData.get(key);
+		throw new Exception("Invalid Type");
+	}
+
+	public CustomObject getCustomObject(String key) throws Exception {
+		if (key == null) {
+			throw new IllegalArgumentException("Key " + key + " cannot be null.");
+		}
+		if (objectData.get(key) instanceof database.CustomObject)
+			return (CustomObject) objectData.get(key);
+		throw new Exception("Invalid Type");
+	}
+
+	public int length() {
+		return objectData.size();
+	}
+
+	public Object remove(String key) {
+		return objectData.remove(key);
+	}
+
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("{");
+		for (String key : objectData.keySet()) {
+			buffer.append(key + ':' + objectData.get(key) + ",");
+		}
+		buffer.deleteCharAt(buffer.length() - 1);
+		buffer.append("}");
+		return buffer.toString();
+	}
+
+	public static CustomObject fromString(String string) throws JSONException, IOException {
+		CustomObject customObject = new CustomObject();
+		JSONObject jsonObject = new JSONObject(string);
+		Iterator a = jsonObject.keys();
+
+		while (a.hasNext()) {
+			String key = (String) a.next();
+			Object value = jsonObject.get(key);
+			if (value instanceof org.json.JSONArray) {
+				customArray arr1 = new customArray();
+				arr1.put(value);
+				customObject.put(key, arr1);
+			} else if (value instanceof org.json.JSONObject) {
+				CustomObject objectType = new CustomObject();
+				JSONObject json = (JSONObject) (value);
+				Iterator itr = json.keys();
+				while (itr.hasNext()) {
+					String subKey = (String) itr.next();
+					Object getValue = json.get(subKey);
+					objectType.put(subKey, getValue);
+				}
+				customObject.put(key, objectType);
+
+			} else {
+				customObject.put(key, value);
+			}
+
+		}
+		return customObject;
+	}
+
+}
+
+												customArray.java
+
+
+package database;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class customArray {
+
+	private ArrayList<Object> customArray;
+
+	public customArray() {
+		customArray = new ArrayList<Object>();
+	}
+
+	public void put(Object value) {
+		customArray.add(value);
+	}
+
+	public Object get(int index) {
+		Object value = customArray.get(index);
+		return value;
+	}
+
+	public String getString(int index) {
+		Object getVal = customArray.get(index);
+		if (!(getVal instanceof String)) {
+			throw new IllegalArgumentException();
+		}
+		String value = getVal.toString();
+		return value;
+	}
+
+	public int getInteger(int index) {
+		Object getVal = customArray.get(index);
+		if (!(getVal instanceof Integer)) {
+			throw new IllegalArgumentException();
+		}
+		int value = (int) getVal;
+		return value;
+	}
+
+	public double getDouble(int index) {
+		Object getVal = customArray.get(index);
+		if (!(getVal instanceof Double)) {
+			throw new IllegalArgumentException();
+		}
+		double value = (double) getVal;
+		return value;
+	}
+
+	public customArray getDbArray(int index) {
+		Object val = customArray.get(index);
+		if (!(val instanceof database.customArray)) {
+			throw new IllegalArgumentException();
+		}
+		customArray value = (customArray) val;
+		return value;
+	}
+
+	public CustomObject getCustomObject(int index) {
+		Object getVal = customArray.get(index);
+		if (!(getVal instanceof database.CustomObject)) {
+			throw new IllegalArgumentException();
+		}
+		CustomObject value = (CustomObject) getVal;
+		return value;
+	}
+
+	public int length() {
+		return customArray.size();
+	}
+
+	public Object remove(int index) {
+		Object getVal = customArray.get(index);
+		customArray.remove(index);
+		return getVal;
+	}
+
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("[");
+		for (int i = 0; i < customArray.size(); i++)
+			buffer.append(customArray.get(i) + ",");
+		buffer.deleteCharAt(buffer.length() - 1);
+		buffer.append("]");
+		return buffer.toString();
+	}
+
+	public static customArray fromString(String str) throws JSONException, IOException {
+		customArray customArray = new customArray();
+		JSONArray jsonArray = new JSONArray(str);
+		for (int i = 0; i < jsonArray.length(); i++) {
+			Object value = jsonArray.get(i);
+			if (value instanceof org.json.JSONArray) {
+				customArray array = new customArray();
+				array.put(value);
+				customArray.put(array);
+			} else if (value instanceof org.json.JSONObject) {
+				CustomObject dbObject = new CustomObject();
+				JSONObject jsonObject = new JSONObject(value.toString());
+				Iterator a = jsonObject.keys();
+				while (a.hasNext()) {
+					String key = (String) a.next();
+					Object val = jsonObject.get(key);
+					dbObject.put(key, val);
+				}
+				customArray.put(dbObject);
+			} else {
+				customArray.put(value);
+			}
+		}
+		return customArray;
+	}
+}
+
+
+												DatabaseTest.java
+
+
+package database;
+
+import static org.junit.Assert.*;
+import java.util.HashMap;
+import org.junit.Test;
+
+import database.memento.DbMemento;
+
+public class DatabaseTest {
+	private Database database = new Database();
+
+	@Test
+	public void testGetAndPut() {
+		Cursor cursor = Cursor.getInstance();
+		cursor.set("toto", 10);
+		database.put(cursor);
+
+		Cursor newCursor = database.get(cursor);
+		assertEquals("Should be equal", cursor.key(), newCursor.key());
+		assertEquals("Should be equal", cursor.value(), newCursor.value());
+	}
+
+	@Test
+	public void testSaveAndGetMemento() {
+		Cursor cursor = Cursor.getInstance();
+		cursor.set("toto", 10);
+		database.put(cursor);
+		cursor.set("tata", 20);
+		database.put(cursor);
+
+		DbMemento memento = database.saveStateToMemento();
+
+		// Invalid the database
+		database.setState(new HashMap<String, Object>());
+		cursor.setKey("toto");
+		cursor = database.get(cursor);
+		assertEquals("Should be equal", null, cursor.value());
+		cursor.setKey("tata");
+		cursor = database.get(cursor);
+		assertEquals("Should be equal", null, cursor.value());
+
+		// Restore from memento
+		database.getStateFromMemento(memento);
+		cursor.setKey("toto");
+		cursor = database.get(cursor);
+		assertEquals("Should be equal", 10, cursor.value());
+		cursor.setKey("tata");
+		cursor = database.get(cursor);
+		assertEquals("Should be equal", 20, cursor.value());
+
+	}
+}
+
+
+													DbAdministratorTest.java
+
+
+package database;
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+public class DbAdministratorTest {
+	private static final String DB_TEST_LOCATION = "database/testDatabase.json";
+	private DbAdministrator dbAdmin = DbAdministrator.getInstance();
+
+	@Test
+	public void testGetAndPut() {
+		dbAdmin.put("toto", 10);
+
+		Cursor cursor = dbAdmin.get("toto");
+		assertEquals("Should be equal", 10, cursor.value());
+	}
+
+	@Test
+	public void testSaveAndGetDb() {
+		dbAdmin.put("toto", 10);
+		dbAdmin.put("tata", 20);
+
+		dbAdmin.saveDatabase(DB_TEST_LOCATION);
+		dbAdmin.put("toto", 0);
+		dbAdmin.put("tata", 0);
+		Cursor cursor = dbAdmin.get("toto");
+		assertEquals("Should be equal", 0, cursor.value());
+		cursor = dbAdmin.get("tata");
+		assertEquals("Should be equal", 0, cursor.value());
+
+		dbAdmin.restoreDatabase(DB_TEST_LOCATION);
+		cursor = dbAdmin.get("toto");
+		assertEquals("Should be equal", Double.valueOf(10), cursor.value());
+		cursor = dbAdmin.get("tata");
+		assertEquals("Should be equal", Double.valueOf(20), cursor.value());
+	}
+}
+
+
+
+
